@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shopping", "shopping", "{4EC51E57-671C-8648-2C4B-1322FA058310}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shopping.Client", "shopping\Shopping.Client\Shopping.Client.csproj", "{1F1AEA60-712D-A0BF-2F4D-224B31E65270}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F1AEA60-712D-A0BF-2F4D-224B31E65270}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F1AEA60-712D-A0BF-2F4D-224B31E65270}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F1AEA60-712D-A0BF-2F4D-224B31E65270}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F1AEA60-712D-A0BF-2F4D-224B31E65270}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1F1AEA60-712D-A0BF-2F4D-224B31E65270} = {4EC51E57-671C-8648-2C4B-1322FA058310}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9362FABB-C0F4-458F-AB0E-D4431FC81F4A}
+	EndGlobalSection
+EndGlobal
