@@ -85,6 +85,14 @@ public class ProductController : ControllerBase
     {
         try
         {
+            // 輸入驗證 - 黑箱測試要求
+            var validationResult = ValidateProduct(product);
+            if (!string.IsNullOrEmpty(validationResult))
+            {
+                _logger.LogWarning($"產品驗證失敗: {validationResult}");
+                return BadRequest(validationResult);
+            }
+
             product.Id = null;
             await _context.Products.InsertOneAsync(product);
             _logger.LogInformation($"成功新增產品: {product.Name}");
@@ -106,6 +114,14 @@ public class ProductController : ControllerBase
     {
         try
         {
+            // 輸入驗證 - 黑箱測試要求
+            var validationResult = ValidateProduct(product);
+            if (!string.IsNullOrEmpty(validationResult))
+            {
+                _logger.LogWarning($"產品驗證失敗: {validationResult}");
+                return BadRequest(validationResult);
+            }
+
             var existingProduct = await _context.Products.Find(p => p.Id == id).FirstOrDefaultAsync();
             if (existingProduct == null)
             {
@@ -154,5 +170,38 @@ public class ProductController : ControllerBase
             _logger.LogError($"刪除產品時發生錯誤: {ex.Message}");
             return StatusCode(500, "伺服器內部錯誤");
         }
+    }
+
+    /// <summary>
+    /// 驗證產品資料 - 支援黑箱測試
+    /// </summary>
+    /// <param name="product">要驗證的產品</param>
+    /// <returns>驗證錯誤訊息，如果驗證通過則回傳空字串</returns>
+    private string ValidateProduct(Product product)
+    {
+        if (product == null)
+        {
+            return "產品資料不能為空";
+        }
+
+        // 驗證產品名稱
+        if (string.IsNullOrWhiteSpace(product.Name))
+        {
+            return "產品名稱不能為空";
+        }
+
+        // 驗證產品分類
+        if (string.IsNullOrWhiteSpace(product.Category))
+        {
+            return "產品分類不能為空";
+        }
+
+        // 驗證產品價格
+        if (product.Price < 0)
+        {
+            return "產品價格不能為負數";
+        }
+
+        return string.Empty; // 驗證通過
     }
 }
