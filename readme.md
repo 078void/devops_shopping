@@ -12,9 +12,23 @@ docker-compose up --build
 🌐 API: http://localhost:5000/scalar/v1
 
 ---
+## 🚀 執行測試
+
+### 執行所有測試
+```powershell
+cd shopping/Shopping.API.Tests
+### 執行所有測試
+dotnet test
+
+### 執行測試並顯示詳細資訊
+dotnet test --verbosity normal
+
+### 執行測試並產生程式碼覆蓋率報告
+dotnet test --collect:"XPlat Code Coverage" --results-directory ./TestResults
+```
+---
 
 ## 本地啟動方法
----
 
 ## 🚀 快速啟動
 
