@@ -1,12 +1,25 @@
+
+## 🐳 Docker 啟動
+
+```bash
+# 啟動所有服務（一鍵啟動）
+cd shopping
+docker-compose up --build
+
+```
+
+🌐 網站: http://localhost:5001  
+🌐 API: http://localhost:5000/scalar/v1
+
+---
+
 ## 本地啟動方法
 ---
 
 ## 🚀 快速啟動
 
 ### 1️⃣ 啟動 MongoDB
-```bash
-docker start shopping-mongo
-```
+開啟MongoDB在localhost:27017上
 
 ### 2️⃣ 啟動 Shopping.API（終端視窗 1）
 ```bash

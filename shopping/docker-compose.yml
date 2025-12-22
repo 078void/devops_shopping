@@ -1,0 +1,59 @@
+version: '3.8'
+
+# ========================================
+# 服務定義（三個微服務）
+# ========================================
+services:
+  
+  # MongoDB 資料庫
+  shopping-mongodb:
+    container_name: shopping-mongodb
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+
+  # Shopping.API 後端服務
+  shopping-api:
+    container_name: shopping-api
+    image: shopping-api:latest
+    build:
+      context: .
+      dockerfile: Shopping.API/Dockerfile
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DatabaseSettings__ConnectionString=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@shopping-mongodb:27017
+      - DatabaseSettings__DatabaseName=ProductDb
+      - DatabaseSettings__CollectionName=Products
+    depends_on:
+      - shopping-mongodb
+    restart: on-failure
+
+  # Shopping.Client 前端服務
+  shopping-client:
+    container_name: shopping-client
+    image: shopping-client:latest
+    build:
+      context: .
+      dockerfile: Shopping.Client/Dockerfile
+    ports:
+      - "5001:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ShoppingAPIUrl=http://shopping-api:80
+    depends_on:
+      - shopping-api
+    restart: on-failure
+
+# ========================================
+# 資料卷定義（持久化資料）
+# ========================================
+volumes:
+  mongo-data:
