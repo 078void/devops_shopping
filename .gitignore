@@ -64,3 +64,4 @@ logs/
 # ========================================
 TestResults/
 *.trx
+shopping/k8s/mongodb-secret.yaml

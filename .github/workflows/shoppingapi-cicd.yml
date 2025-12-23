@@ -1,0 +1,128 @@
+# Shopping.API CI/CD Pipeline
+# 功能：建置、測試、推送 Docker Image、部署到 AKS
+
+name: Shopping.API CI/CD
+
+# 觸發條件
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'shopping/Shopping.API/**'
+      - 'shopping/k8s/shoppingapi-*.yaml'
+      - '.github/workflows/shoppingapi-cicd.yml'
+  
+  workflow_dispatch:  # 允許手動觸發
+
+# 環境變數
+env:
+  IMAGE_NAME: shoppingapi
+  IMAGE_TAG: ${{ github.sha }}
+  PROJECT_PATH: shopping/Shopping.API
+  TEST_PROJECT_PATH: shopping/Shopping.API.Tests
+  K8S_PATH: shopping/k8s
+
+jobs:
+  # Job 1: 建置與測試
+  build-and-test:
+    name: 建置與測試
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 檢出程式碼
+        uses: actions/checkout@v4
+      
+      - name: 設定 .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: 還原套件
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+      
+      - name: 建置專案
+        run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
+      
+      - name: 執行測試
+        run: |
+          dotnet test ${{ env.TEST_PROJECT_PATH }} \
+            --configuration Release \
+            --verbosity normal \
+            --collect:"XPlat Code Coverage"
+
+  # Job 2: 建置並推送 Docker Image
+  build-and-push-image:
+    name: 建置並推送 Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    steps:
+      - name: 檢出程式碼
+        uses: actions/checkout@v4
+      
+      - name: 登入 Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      
+      - name: 建置並推送 Docker Image
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest \
+            ${{ env.PROJECT_PATH }}
+          
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+
+  # Job 3: 部署到 AKS
+  deploy-to-aks:
+    name: 部署到 AKS
+    runs-on: ubuntu-latest
+    needs: build-and-push-image
+    
+    steps:
+      - name: 檢出程式碼
+        uses: actions/checkout@v4
+      
+      - name: 登入 Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: 設定 AKS Context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+      
+      - name: 部署 MongoDB
+        run: |
+          kubectl apply -f ${{ env.K8S_PATH }}/mongodb-secret.yaml
+          kubectl apply -f ${{ env.K8S_PATH }}/mongodb-pvc.yaml
+          kubectl apply -f ${{ env.K8S_PATH }}/mongodb-deployment.yaml
+          kubectl apply -f ${{ env.K8S_PATH }}/mongodb-service.yaml
+      
+      - name: 部署 ConfigMap
+        run: kubectl apply -f ${{ env.K8S_PATH }}/shoppingapi-configmap.yaml
+      
+      - name: 更新 Deployment
+        run: |
+          kubectl apply -f ${{ env.K8S_PATH }}/shoppingapi-deployment.yaml
+          kubectl apply -f ${{ env.K8S_PATH }}/shoppingapi-service.yaml
+          
+          kubectl set image deployment/shoppingapi-deployment \
+            shoppingapi=${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          
+          kubectl rollout status deployment/shoppingapi-deployment --timeout=5m
+      
+      - name: 驗證部署
+        run: |
+          echo "========================================="
+          echo "部署完成"
+          echo "========================================="
+          kubectl get pods -l app=shoppingapi
+          kubectl get deployment shoppingapi-deployment
+          kubectl get service shoppingapi-service
