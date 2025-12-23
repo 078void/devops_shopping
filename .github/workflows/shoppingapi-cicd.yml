@@ -117,7 +117,7 @@ jobs:
       - name: 建立 MongoDB 連接字串 ConfigMap
         run: |
           # 構建 MongoDB 連接字串（使用 GitHub Secrets）
-          MONGO_CONNECTION_STRING="mongodb://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@mongodb-service:27017"
+          MONGO_CONNECTION_STRING="mongodb://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@mongodb-service:27017/ProductDb?authSource=admin"
           
           # 建立或更新 ConfigMap
           kubectl create configmap mongodb-connection-string \
