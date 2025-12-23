@@ -1,0 +1,22 @@
+# ============================================
+# Service：提供穩定的網路端點
+# ============================================
+apiVersion: v1          # Kubernetes API 版本
+kind: Service           # 資源類型：Service（服務）
+metadata:
+  name: mongodb-service # Service 的名稱（其他 Pod 會用這個名稱連線）
+
+# spec：定義 Service 的規格
+spec:
+  # selector：選擇要代理的 Pods
+  selector:
+    app: mongodb        # 選擇標籤為 app=mongodb 的 Pods
+  
+  # ports：Service 的埠號設定
+  ports:
+  - protocol: TCP       # 使用的協定（TCP/UDP）
+    port: 27017         # Service 的埠號（其他 Pod 連這個埠號）
+    targetPort: 27017   # 目標 Pod 的埠號（轉發到 Pod 的這個埠號）
+  
+  # type：Service 的類型
+  type: ClusterIP       # ClusterIP：只有叢集內部可以存取

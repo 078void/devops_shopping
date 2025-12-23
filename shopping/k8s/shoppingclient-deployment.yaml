@@ -1,0 +1,42 @@
+# ============================================
+# Shopping.Client Deployment
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shoppingclient-deployment
+  labels:
+    app: shoppingclient
+
+spec:
+  # Client 也是無狀態服務，可以有多個副本
+  replicas: 3
+  
+  selector:
+    matchLabels:
+      app: shoppingclient
+  
+  template:
+    metadata:
+      labels:
+        app: shoppingclient
+    
+    spec:
+      containers:
+      - name: shoppingclient
+        image: acrshoppingdev.azurecr.io/shoppingclient:v1
+        imagePullPolicy: Always
+        
+        ports:
+        - containerPort: 80     # Client 監聽的埠號
+        
+        # ----------------------------------------
+        # 環境變數：設定 API 的網址
+        # ----------------------------------------
+        env:
+        # Shopping.Client 需要知道 API 的位址
+        # 在 Kubernetes 內部，用 Service 名稱連線
+        - name: ShoppingAPIUrl
+          value: "http://shoppingapi-service:80"
+          # ↑                ↑                ↑
+          # 協定        Service名稱         埠號

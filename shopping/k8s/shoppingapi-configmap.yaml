@@ -1,0 +1,28 @@
+# ============================================
+# ConfigMap：存放非敏感的設定資料
+# ============================================
+apiVersion: v1          # Kubernetes API 版本
+kind: ConfigMap         # 資源類型：ConfigMap（設定檔）
+metadata:
+  name: shoppingapi-configmap  # ConfigMap 的名稱
+
+# data：存放設定資料（key-value 格式）
+# 注意：這裡是明文，不需要 Base64 編碼
+data:
+  # ----------------------------------------
+  # MongoDB 資料庫設定
+  # ----------------------------------------
+  
+  # 資料庫名稱
+  # 對應 appsettings.json 的：
+  # "DatabaseSettings": {
+  #   "DatabaseName": "ProductDb"
+  # }
+  DatabaseSettings__DatabaseName: "ProductDb"
+  
+  # 集合（Collection）名稱
+  # 對應 appsettings.json 的：
+  # "DatabaseSettings": {
+  #   "CollectionName": "Products"
+  # }
+  DatabaseSettings__CollectionName: "Products"

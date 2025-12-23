@@ -1,0 +1,24 @@
+# ============================================
+# Shopping.Client Service
+# ============================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: shoppingclient-service
+
+spec:
+  # ----------------------------------------
+  # Service Type：LoadBalancer
+  # ----------------------------------------
+  # 因為這是前端網站，需要讓使用者從外部存取
+  # LoadBalancer 會取得對外的 IP
+  type: LoadBalancer
+  
+  selector:
+    app: shoppingclient
+  
+  ports:
+  - protocol: TCP
+    port: 80          # 外部存取的埠號
+    targetPort: 80    # 轉發到 Pod 的埠號
+    nodePort: 30001   # （選填）在節點上開放的固定埠號

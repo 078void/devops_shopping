@@ -1,4 +1,39 @@
 
+### 部署所有服務（一鍵部署）
+```powershell
+# MongoDB
+kubectl apply -f k8s/mongodb-secret.yaml
+kubectl apply -f k8s/mongodb-pvc.yaml
+kubectl apply -f k8s/mongodb-deployment.yaml
+kubectl apply -f k8s/mongodb-service.yaml
+
+# Shopping.API
+kubectl apply -f k8s/shoppingapi-configmap.yaml
+kubectl apply -f k8s/shoppingapi-deployment.yaml
+kubectl apply -f k8s/shoppingapi-service.yaml
+
+# Shopping.Client
+kubectl apply -f k8s/shoppingclient-deployment.yaml
+kubectl apply -f k8s/shoppingclient-service.yaml
+```
+
+### 查看部署狀態
+```powershell
+kubectl get pods              # 查看 Pods 狀態
+kubectl get services          # 查看 Services（含外部 IP）
+kubectl get deployments       # 查看 Deployments
+```
+
+###  取得外部訪問位址
+```powershell
+# 取得 LoadBalancer 外部 IP
+kubectl get service shoppingclient-service
+
+# 或直接取得 IP
+kubectl get service shoppingclient-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+---
 ## 🐳 Docker 啟動
 
 ```bash

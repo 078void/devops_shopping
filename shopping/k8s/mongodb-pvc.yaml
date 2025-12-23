@@ -1,0 +1,12 @@
+# mongodb-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce  # 單一 Pod 讀寫
+  resources:
+    requests:
+      storage: 5Gi   # 請求 5GB 存儲空間
+  storageClassName: default 

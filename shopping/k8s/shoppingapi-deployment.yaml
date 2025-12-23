@@ -1,0 +1,62 @@
+# ============================================
+# Deployment：管理 Shopping API Pod 的部署和生命週期
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shoppingapi-deployment
+  labels:
+    app: shoppingapi
+
+spec:
+  replicas: 2
+  
+  selector:
+    matchLabels:
+      app: shoppingapi
+  
+  template:
+    metadata:
+      labels:
+        app: shoppingapi
+    
+    spec:
+      containers:
+      - name: shoppingapi
+        image: acrshoppingdev.azurecr.io/shoppingapi:v1
+        
+        ports:
+        - containerPort: 80
+        
+        env:
+        # 從 Secret 讀取 MongoDB 用戶名
+        - name: MONGO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: username
+        
+        # 從 Secret 讀取 MongoDB 密碼
+        - name: MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        
+        # 構建完整的 MongoDB 連接字串（包含認證）
+        - name: DatabaseSettings__ConnectionString
+          value: "mongodb://$(MONGO_USERNAME):$(MONGO_PASSWORD)@mongodb-service:27017"
+        
+        # 使用現有的 ConfigMap keys
+        - name: DatabaseSettings__DatabaseName
+          valueFrom:
+            configMapKeyRef:
+              name: shoppingapi-configmap
+              key: DatabaseSettings__DatabaseName
+        
+        - name: DatabaseSettings__CollectionName
+          valueFrom:
+            configMapKeyRef:
+              name: shoppingapi-configmap
+              key: DatabaseSettings__CollectionName
+        

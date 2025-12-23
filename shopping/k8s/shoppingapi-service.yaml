@@ -1,0 +1,30 @@
+# ============================================
+# Shopping.API Service
+# ============================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: shoppingapi-service  # Shopping.Client 會用這個名稱連線
+
+spec:
+  # ----------------------------------------
+  # Service Type：ClusterIP
+  # ----------------------------------------
+  # 因為 API 只給 Client 內部呼叫
+  # 不需要對外開放
+  type: ClusterIP
+  
+  # ----------------------------------------
+  # 選擇要代理的 Pods
+  # ----------------------------------------
+  selector:
+    app: shoppingapi  # 選擇標籤為 app=shoppingapi 的所有 Pods
+                      # 如果有 3 個 Pod，Service 會自動負載平衡
+  
+  # ----------------------------------------
+  # 埠號設定
+  # ----------------------------------------
+  ports:
+  - protocol: TCP
+    port: 80          # Service 的埠號（其他 Pod 連這個）
+    targetPort: 80    # 轉發到 Pod 的埠號
