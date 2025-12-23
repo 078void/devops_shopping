@@ -5,12 +5,11 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # 複製專案檔並還原套件（先複製 .csproj 可以利用 Docker 快取）
-COPY ["Shopping.API/Shopping.API.csproj", "Shopping.API/"]
-RUN dotnet restore "Shopping.API/Shopping.API.csproj"
+COPY ["Shopping.API.csproj", "./"]
+RUN dotnet restore "Shopping.API.csproj"
 
 # 複製所有原始碼
 COPY . .
-WORKDIR "/src/Shopping.API"
 
 # 建置專案並發佈到 /app/publish
 RUN dotnet build "Shopping.API.csproj" -c Release -o /app/build
