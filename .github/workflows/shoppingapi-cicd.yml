@@ -101,8 +101,8 @@ jobs:
       
       - name: 部署 MongoDB
         run: |
-          kubectl apply -f ${{ env.K8S_PATH }}/mongodb-secret.yaml
-          kubectl apply -f ${{ env.K8S_PATH }}/mongodb-pvc.yaml
+          kubectl create secret generic mongodb-secret --from-literal=username=${{ secrets.MONGO_USERNAME }} --from-literal=password=${{ secrets.MONGO_PASSWORD }} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl replace -f ${{ env.K8S_PATH }}/mongodb-pvc.yaml
           kubectl apply -f ${{ env.K8S_PATH }}/mongodb-deployment.yaml
           kubectl apply -f ${{ env.K8S_PATH }}/mongodb-service.yaml
       
