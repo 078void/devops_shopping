@@ -1,0 +1,60 @@
+# ============================================
+# Ingress：為應用程式配置固定網域訪問
+# ============================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shopping-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # NGINX Ingress Controller 設定
+    # 啟用 SSL 重定向
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # 使用 cert-manager 簽發證書
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # 設定最大請求大小
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"    
+spec:
+  # ----------------------------------------
+  # Ingress Class：指定使用的 Ingress Controller
+  # ----------------------------------------
+  ingressClassName: nginx
+  
+  # ----------------------------------------
+  # 路由規則
+  # ----------------------------------------
+  rules:
+  # 主網域：shopping.yourdomain.com
+  - host: shopping.voidspace.win
+    http:
+      paths:
+      # 前端應用（Shopping.Client）
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: shoppingclient-service
+            port:
+              number: 80
+  
+  # API 網域：shop.voidspace.win
+  - host: api.shopping.voidspace.win
+    http:
+      paths:
+      # API 服務（Shopping.API）
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: shoppingapi-service
+            port:
+              number: 80
+
+  # ----------------------------------------
+  # TLS/SSL 設定（可選，用於 HTTPS）
+  # ----------------------------------------
+  tls:
+  - hosts:
+    - api.shopping.voidspace.win
+    - shopping.voidspace.win
+    secretName: shopping-tls-secret

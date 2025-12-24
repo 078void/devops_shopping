@@ -1,0 +1,25 @@
+# ============================================
+# ClusterIssuer：使用 Let's Encrypt 自動簽發證書
+# ============================================
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+
+spec:
+  acme:
+    # Let's Encrypt 生產環境伺服器
+    server: https://acme-v02.api.letsencrypt.org/directory
+    
+    # 您的電子郵件（用於證書通知）
+    email: 078void@gmail.com
+    
+    # 儲存 ACME 帳戶私鑰的 Secret
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    
+    # HTTP-01 挑戰
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
