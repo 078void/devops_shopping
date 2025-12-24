@@ -85,13 +85,13 @@ public class ProductController : ControllerBase
     {
         try
         {
-            // // 輸入驗證 - 黑箱測試要求
-            // var validationResult = ValidateProduct(product);
-            // if (!string.IsNullOrEmpty(validationResult))
-            // {
-            //     _logger.LogWarning($"產品驗證失敗: {validationResult}");
-            //     return BadRequest(validationResult);
-            // }
+            // 輸入驗證 - 黑箱測試要求
+            var validationResult = ValidateProduct(product);
+            if (!string.IsNullOrEmpty(validationResult))
+            {
+                _logger.LogWarning($"產品驗證失敗: {validationResult}");
+                return BadRequest(validationResult);
+            }
 
             product.Id = null;
             await _context.Products.InsertOneAsync(product);
