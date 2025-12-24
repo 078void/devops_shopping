@@ -40,3 +40,10 @@ spec:
           value: "http://shoppingapi-service:80"
           # ↑                ↑                ↑
           # 協定        Service名稱         埠號
+        volumeMounts:
+        - name: dataprotection-keys
+          mountPath: /app/dataprotection-keys
+      volumes:
+      - name: dataprotection-keys
+        persistentVolumeClaim:
+          claimName: dataprotection-pvc

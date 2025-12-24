@@ -6,7 +6,7 @@ kind: Ingress
 metadata:
   name: shopping-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    # nginx.ingress.kubernetes.io/rewrite-target: /
     # NGINX Ingress Controller 設定
     # 啟用 SSL 重定向
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
