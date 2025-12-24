@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - github-action-cicd-test
+      - dns-setting
     paths:
       - 'shopping/Shopping.Client/**'
       - 'shopping/k8s/shoppingclient-*.yaml'
