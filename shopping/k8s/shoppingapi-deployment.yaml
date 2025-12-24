@@ -43,11 +43,10 @@ spec:
               name: mongodb-secret
               key: password
         
-        # 從 ConfigMap 讀取 MongoDB 連接字串
         - name: DatabaseSettings__ConnectionString
           valueFrom:
-            configMapKeyRef:
-              name: mongodb-connection-string
+            secretKeyRef:
+              name: mongodb-conn
               key: connection-string
         
         # 使用現有的 ConfigMap keys

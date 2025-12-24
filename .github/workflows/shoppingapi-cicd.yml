@@ -114,15 +114,11 @@ jobs:
       - name: 部署 ConfigMap
         run: kubectl apply -f ${{ env.K8S_PATH }}/shoppingapi-configmap.yaml
       
-      - name: 建立 MongoDB 連接字串 ConfigMap
+      - name: 建立 MongoDB ConnectionString Secret
         run: |
-          # 構建 MongoDB 連接字串（使用 GitHub Secrets）
-          echo "建立 MongoDB Secret..."
-          kubectl create secret generic mongodb-secret \
-            --from-literal=username=${{ secrets.MONGO_USERNAME }} \
-            --from-literal=password=${{ secrets.MONGO_PASSWORD }} \
+          kubectl create secret generic mongodb-conn \
+            --from-literal=connection-string="mongodb://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@mongodb-service:27017/ProductDb?authSource=admin" \
             --dry-run=client -o yaml | kubectl apply -f -
-          
       - name: 更新 Deployment
         run: |
           kubectl apply -f ${{ env.K8S_PATH }}/shoppingapi-deployment.yaml
