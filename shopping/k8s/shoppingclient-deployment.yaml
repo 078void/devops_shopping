@@ -10,7 +10,7 @@ metadata:
 
 spec:
   # Client 也是無狀態服務，可以有多個副本
-  replicas: 2
+  replicas: 1
   
   selector:
     matchLabels:
