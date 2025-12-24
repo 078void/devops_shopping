@@ -43,9 +43,11 @@ spec:
               name: mongodb-secret
               key: password
         
-        # 構建完整的 MongoDB 連接字串（包含認證）
         - name: DatabaseSettings__ConnectionString
-          value: "mongodb://$(MONGO_USERNAME):$(MONGO_PASSWORD)@mongodb-service:27017"
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-conn
+              key: connection-string
         
         # 使用現有的 ConfigMap keys
         - name: DatabaseSettings__DatabaseName

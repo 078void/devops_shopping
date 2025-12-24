@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - master
+      - github-action-cicd-test
     paths:
       - 'shopping/Shopping.API/**'
       - 'shopping/k8s/shoppingapi-*.yaml'
@@ -100,14 +101,24 @@ jobs:
       
       - name: 部署 MongoDB
         run: |
-          kubectl apply -f ${{ env.K8S_PATH }}/mongodb-secret.yaml
-          kubectl apply -f ${{ env.K8S_PATH }}/mongodb-pvc.yaml
+          kubectl create secret generic mongodb-secret --from-literal=username=${{ secrets.MONGO_USERNAME }} --from-literal=password=${{ secrets.MONGO_PASSWORD }} --dry-run=client -o yaml | kubectl apply -f -
+          if ! kubectl get pvc mongodb-pvc &>/dev/null; then
+            echo "建立 MongoDB PVC..."
+            kubectl apply -f ${{ env.K8S_PATH }}/mongodb-pvc.yaml
+          else
+            echo "MongoDB PVC 已存在且已綁定，跳過建立"
+          fi
           kubectl apply -f ${{ env.K8S_PATH }}/mongodb-deployment.yaml
           kubectl apply -f ${{ env.K8S_PATH }}/mongodb-service.yaml
       
       - name: 部署 ConfigMap
         run: kubectl apply -f ${{ env.K8S_PATH }}/shoppingapi-configmap.yaml
       
+      - name: 建立 MongoDB ConnectionString Secret
+        run: |
+          kubectl create secret generic mongodb-conn \
+            --from-literal=connection-string="mongodb://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@mongodb-service:27017/ProductDb?authSource=admin" \
+            --dry-run=client -o yaml | kubectl apply -f -
       - name: 更新 Deployment
         run: |
           kubectl apply -f ${{ env.K8S_PATH }}/shoppingapi-deployment.yaml

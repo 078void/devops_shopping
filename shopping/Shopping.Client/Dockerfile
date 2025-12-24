@@ -5,12 +5,11 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # 複製專案檔並還原套件
-COPY ["Shopping.Client/Shopping.Client.csproj", "Shopping.Client/"]
-RUN dotnet restore "Shopping.Client/Shopping.Client.csproj"
+COPY ["Shopping.Client.csproj", "./"]
+RUN dotnet restore "Shopping.Client.csproj"
 
 # 複製所有原始碼
 COPY . .
-WORKDIR "/src/Shopping.Client"
 
 # 建置專案並發佈
 RUN dotnet build "Shopping.Client.csproj" -c Release -o /app/build
