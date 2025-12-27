@@ -1,0 +1,16 @@
+# ============================================
+# PersistentVolumeClaim：Data Protection Keys 持久化存儲
+# ============================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dataprotection-pvc
+  labels:
+    app: shoppingclient
+spec:
+  accessModes:
+    - ReadWriteMany  # 多個 Pod 可以同時讀寫
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: azurefile-csi

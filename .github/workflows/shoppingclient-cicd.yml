@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - github-action-cicd-test
+      - dns-setting
     paths:
       - 'shopping/Shopping.Client/**'
       - 'shopping/k8s/shoppingclient-*.yaml'
@@ -93,6 +94,9 @@ jobs:
       
       - name: 更新 Deployment
         run: |
+
+          kubectl apply -f ${{ env.K8S_PATH }}/ingress.yaml
+
           kubectl apply -f ${{ env.K8S_PATH }}/shoppingclient-deployment.yaml
           kubectl apply -f ${{ env.K8S_PATH }}/shoppingclient-service.yaml
           
@@ -101,12 +105,20 @@ jobs:
           
           kubectl rollout status deployment/shoppingclient-deployment --timeout=5m
       
-      - name: 取得 External IP
+      - name: 顯示網域資訊
         run: |
-          echo "等待 External IP 分配..."
-          sleep 30
-          EXTERNAL_IP=$(kubectl get service shoppingclient-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          echo "應用程式 URL: http://$EXTERNAL_IP"
+          INGRESS_IP=$(kubectl get ingress shopping-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "Ingress 尚未建立")
+          echo "========================================="
+          echo "🌐 網域設定資訊"
+          echo "========================================="
+          echo "Ingress IP: $INGRESS_IP"
+          echo ""
+          echo "請確認 DNS 設定："
+          echo "  shopping.voidspace.win     → $INGRESS_IP"
+          echo "  api.shopping.voidspace.win → $INGRESS_IP"
+          echo ""
+          echo "如果 IP 改變，請更新 Cloudflare DNS 設定"
+          echo "========================================="
       
       - name: 驗證部署
         run: |
