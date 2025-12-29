@@ -3,7 +3,7 @@
 ## 專案簡介
 購物網站微服務架構，包含前端、API 和資料庫，部署在 Azure Kubernetes Service。
 
-**線上展示：** https://shopping.voidspace.win/
+**線上展示(開機時間為每日9:00~18:00)：** https://shopping.voidspace.win/
 
 **GitHub連結：** https://github.com/078void/devops_shopping
 
