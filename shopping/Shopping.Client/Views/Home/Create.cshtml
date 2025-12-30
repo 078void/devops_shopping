@@ -91,25 +91,127 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     
-    <script>
-        // 圖片預覽功能
-        function previewImage(event) {
-            const file = event.target.files[0];
-            if (file) {
+        <style>
+            /* 拖放區域樣式 */
+            .drop-zone {
+                border: 3px dashed #dee2e6;
+                border-radius: 8px;
+                padding: 40px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                background-color: #f8f9fa;
+            }
+        
+            .drop-zone:hover {
+                border-color: #0d6efd;
+                background-color: #e7f1ff;
+            }
+        
+            .drop-zone.dragover {
+                border-color: #0d6efd;
+                background-color: #e7f1ff;
+                transform: scale(1.02);
+            }
+        
+            .drop-zone-content {
+                pointer-events: none;
+            }
+        </style>
+    
+        <script>
+            // 等待 DOM 完全載入後再執行
+            document.addEventListener('DOMContentLoaded', function() {
+                const dropZone = document.getElementById('dropZone');
+                const fileInput = document.getElementById('imageFile');
+            
+                // 確保元素存在
+                if (!dropZone || !fileInput) {
+                    console.error('拖放區域或檔案輸入元素未找到');
+                    return;
+                }
+            
+                // 防止默認的拖放行為
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, preventDefaults, false);
+                    document.body.addEventListener(eventName, preventDefaults, false);
+                });
+            
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            
+                // 拖放視覺效果
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, highlight, false);
+                });
+            
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, unhighlight, false);
+                });
+            
+                function highlight(e) {
+                    dropZone.classList.add('dragover');
+                }
+            
+                function unhighlight(e) {
+                    dropZone.classList.remove('dragover');
+                }
+            
+                // 處理拖放的檔案
+                dropZone.addEventListener('drop', handleDrop, false);
+            
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        previewImage({ target: { files: files } });
+                    }
+                }
+            });
+        
+            // 圖片預覽功能
+            function previewImage(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+            
+                // 檢查檔案類型
+                if (!file.type.startsWith('image/')) {
+                    alert('請選擇圖片檔案！');
+                    return;
+                }
+            
+                // 檢查檔案大小（5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('圖片大小不能超過 5MB！');
+                    return;
+                }
+            
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.getElementById('preview').src = e.target.result;
-                    document.getElementById('imagePreview').style.display = 'block';
+                    const preview = document.getElementById('preview');
+                    const imagePreview = document.getElementById('imagePreview');
+                    const dropZone = document.getElementById('dropZone');
+                
+                    if (preview) preview.src = e.target.result;
+                    if (imagePreview) imagePreview.style.display = 'block';
+                    if (dropZone) dropZone.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             }
-        }
         
-        // 清除圖片
-        function clearImage() {
-            document.getElementById('imageFile').value = '';
-            document.getElementById('imagePreview').style.display = 'none';
-            document.getElementById('imageUrl').value = '';
-        }
-    </script>
+            // 清除圖片
+            function clearImage() {
+                const imageFile = document.getElementById('imageFile');
+                const imagePreview = document.getElementById('imagePreview');
+                const dropZone = document.getElementById('dropZone');
+            
+                if (imageFile) imageFile.value = '';
+                if (imagePreview) imagePreview.style.display = 'none';
+                if (dropZone) dropZone.style.display = 'block';
+            }
+        </script>
 }

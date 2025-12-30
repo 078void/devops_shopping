@@ -49,22 +49,24 @@
                         <div class="mb-3">
                             <label class="form-label">產品圖片</label>
                             
-                            <!-- 現有圖片預覽 -->
-                            <div id="currentImagePreview" class="mb-3" style="@(string.IsNullOrEmpty(Model.ImageFile) ? "display: none;" : "")">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6 class="card-title">目前圖片：</h6>
-                                        <img id="currentImage" src="@Model.ImageFile" alt="目前產品圖片" 
-                                             class="img-thumbnail" style="max-width: 300px; max-height: 300px;" 
-                                             onerror="this.parentElement.parentElement.style.display='none';" />
-                                        <div class="mt-2">
-                                            <button type="button" class="btn btn-sm btn-primary" onclick="showUploadZone()">
-                                                🔄 更換圖片
-                                            </button>
+                            <!-- 現有圖片預覽（只有當有圖片時才顯示） -->
+                            @if (!string.IsNullOrEmpty(Model.ImageFile))
+                            {
+                                        <div id="currentImagePreview" class="mb-3">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">目前圖片：</h6>
+                                                    <img id="currentImage" src="@Model.ImageFile" alt="目前產品圖片" 
+                                                         class="img-thumbnail" style="max-width: 300px; max-height: 300px;" />
+                                                    <div class="mt-2">
+                                                        <button type="button" class="btn btn-sm btn-primary" onclick="showUploadZone()">
+                                                            🔄 更換圖片
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
+                            }
                             
                             <!-- 拖放上傳區域 -->
                             <div id="dropZone" class="drop-zone" style="@(!string.IsNullOrEmpty(Model.ImageFile) ? "display: none;" : "")" 
@@ -124,121 +126,161 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     
-    <style>
-        /* 拖放區域樣式 */
-        .drop-zone {
-            border: 3px dashed #dee2e6;
-            border-radius: 8px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-        }
+            <style>
+                /* 拖放區域樣式 */
+                .drop-zone {
+                    border: 3px dashed #dee2e6;
+                    border-radius: 8px;
+                    padding: 40px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    background-color: #f8f9fa;
+                }
         
-        .drop-zone:hover {
-            border-color: #ffc107;
-            background-color: #fff3cd;
-        }
+                .drop-zone:hover {
+                    border-color: #ffc107;
+                    background-color: #fff3cd;
+                }
         
-        .drop-zone.dragover {
-            border-color: #ffc107;
-            background-color: #fff3cd;
-            transform: scale(1.02);
-        }
+                .drop-zone.dragover {
+                    border-color: #ffc107;
+                    background-color: #fff3cd;
+                    transform: scale(1.02);
+                }
         
-        .drop-zone-content {
-            pointer-events: none;
-        }
-    </style>
+                .drop-zone-content {
+                    pointer-events: none;
+                }
+            </style>
     
-    <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('imageFile');
-        
-        // 防止默認的拖放行為
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        // 拖放視覺效果
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-        
-        function highlight(e) {
-            dropZone.classList.add('dragover');
-        }
-        
-        function unhighlight(e) {
-            dropZone.classList.remove('dragover');
-        }
-        
-        // 處理拖放的檔案
-        dropZone.addEventListener('drop', handleDrop, false);
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
+        <script>
+            // 等待 DOM 完全載入後再執行
+            document.addEventListener('DOMContentLoaded', function() {
+                const dropZone = document.getElementById('dropZone');
+                const fileInput = document.getElementById('imageFile');
             
-            if (files.length > 0) {
-                fileInput.files = files;
-                previewNewImage({ target: { files: files } });
+                // 確保元素存在
+                if (!dropZone || !fileInput) {
+                    console.error('拖放區域或檔案輸入元素未找到');
+                    return;
+                }
+            
+                // 防止默認的拖放行為
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, preventDefaults, false);
+                    document.body.addEventListener(eventName, preventDefaults, false);
+                });
+            
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            
+                // 拖放視覺效果
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, highlight, false);
+                });
+            
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, unhighlight, false);
+                });
+            
+                function highlight(e) {
+                    dropZone.classList.add('dragover');
+                }
+            
+                function unhighlight(e) {
+                    dropZone.classList.remove('dragover');
+                }
+            
+                // 處理拖放的檔案
+                dropZone.addEventListener('drop', handleDrop, false);
+            
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        previewNewImage({ target: { files: files } });
+                    }
+                }
+            });
+        
+            // 顯示上傳區域（點擊"更換圖片"時）
+            function showUploadZone() {
+                const currentImagePreview = document.getElementById('currentImagePreview');
+                const dropZone = document.getElementById('dropZone');
+            
+                if (currentImagePreview) {
+                    currentImagePreview.style.display = 'none';
+                }
+                if (dropZone) {
+                    dropZone.style.display = 'block';
+                }
             }
-        }
         
-        // 顯示上傳區域（點擊"更換圖片"時）
-        function showUploadZone() {
-            document.getElementById('currentImagePreview').style.display = 'none';
-            document.getElementById('dropZone').style.display = 'block';
-        }
-        
-        // 預覽新圖片
-        function previewNewImage(event) {
-            const file = event.target.files[0];
-            if (file) {
+            // 預覽新圖片
+            function previewNewImage(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+            
                 // 檢查檔案類型
                 if (!file.type.startsWith('image/')) {
                     alert('請選擇圖片檔案！');
                     return;
                 }
-                
+            
                 // 檢查檔案大小（5MB）
                 if (file.size > 5 * 1024 * 1024) {
                     alert('圖片大小不能超過 5MB！');
                     return;
                 }
-                
+            
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.getElementById('newPreview').src = e.target.result;
-                    document.getElementById('newImagePreview').style.display = 'block';
-                    document.getElementById('dropZone').style.display = 'none';
-                    document.getElementById('currentImagePreview').style.display = 'none';
+                    const newPreview = document.getElementById('newPreview');
+                    const newImagePreview = document.getElementById('newImagePreview');
+                    const dropZone = document.getElementById('dropZone');
+                    const currentImagePreview = document.getElementById('currentImagePreview');
+                
+                    if (newPreview) newPreview.src = e.target.result;
+                    if (newImagePreview) newImagePreview.style.display = 'block';
+                    if (dropZone) dropZone.style.display = 'none';
+                    if (currentImagePreview) currentImagePreview.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             }
-        }
         
-        // 取消更換圖片（恢復顯示原圖）
-        function cancelNewImage() {
-            document.getElementById('imageFile').value = '';
-            document.getElementById('newImagePreview').style.display = 'none';
-            document.getElementById('currentImagePreview').style.display = 'block';
-            // 恢復原始圖片 URL
-            document.getElementById('imageUrl').value = document.getElementById('originalImageUrl').value;
-        }
-    </script>
+            // 取消更換圖片（恢復顯示原圖或上傳區域）
+            function cancelNewImage() {
+                const imageFile = document.getElementById('imageFile');
+                const newImagePreview = document.getElementById('newImagePreview');
+                const originalImageUrl = document.getElementById('originalImageUrl');
+                const currentImagePreview = document.getElementById('currentImagePreview');
+                const dropZone = document.getElementById('dropZone');
+                const imageUrl = document.getElementById('imageUrl');
+            
+                // 清空檔案輸入
+                if (imageFile) imageFile.value = '';
+            
+                // 隱藏新圖片預覽
+                if (newImagePreview) newImagePreview.style.display = 'none';
+            
+                // 檢查是否有原始圖片
+                if (originalImageUrl && originalImageUrl.value) {
+                    // 有原始圖片，恢復顯示原圖
+                    if (currentImagePreview) currentImagePreview.style.display = 'block';
+                    if (imageUrl) imageUrl.value = originalImageUrl.value;
+                } else {
+                    // 沒有原始圖片，顯示上傳區域
+                    if (dropZone) dropZone.style.display = 'block';
+                }
+            }
+            </script>
 }

@@ -23,7 +23,7 @@ namespace Shopping.API.Data
                 {
                     Name = "IPhone X",
                     Description = "最新的 iPhone，擁有強大的處理器和高品質相機",
-                    ImageFile = "product-1.png",
+                    ImageFile = "",
                     Price = 950.00M,
                     Category = "Smart Phone"
                 },
@@ -31,7 +31,7 @@ namespace Shopping.API.Data
                 {
                     Name = "Samsung 10",
                     Description = "韓國製造的優質手機，AMOLED 螢幕",
-                    ImageFile = "product-2.png",
+                    ImageFile = "",
                     Price = 840.00M,
                     Category = "Smart Phone"
                 },
@@ -39,7 +39,7 @@ namespace Shopping.API.Data
                 {
                     Name = "Huawei Plus",
                     Description = "中國製造的創新手機，徠卡鏡頭",
-                    ImageFile = "product-3.png",
+                    ImageFile = "",
                     Price = 650.00M,
                     Category = "White Appliances"
                 },
@@ -47,7 +47,7 @@ namespace Shopping.API.Data
                 {
                     Name = "Xiaomi Mi 9",
                     Description = "小米旗艦機，性價比之王",
-                    ImageFile = "product-4.png",
+                    ImageFile = "",
                     Price = 470.00M,
                     Category = "White Appliances"
                 },
@@ -55,7 +55,7 @@ namespace Shopping.API.Data
                 {
                     Name = "HTC U11+ Plus",
                     Description = "台灣之光，優質手機品牌",
-                    ImageFile = "product-5.png",
+                    ImageFile = "",
                     Price = 380.00M,
                     Category = "Smart Phone"
                 },
@@ -63,7 +63,7 @@ namespace Shopping.API.Data
                 {
                     Name = "LG G7 ThinQ",
                     Description = "LG 旗艦機種，AI 相機功能",
-                    ImageFile = "product-6.png",
+                    ImageFile = "",
                     Price = 240.00M,
                     Category = "Home Kitchen"
                 },
@@ -71,7 +71,7 @@ namespace Shopping.API.Data
                 {
                     Name = "Sony Xperia XZ3",
                     Description = "日本製造，OLED 螢幕",
-                    ImageFile = "product-7.png",
+                    ImageFile = "",
                     Price = 720.00M,
                     Category = "Smart Phone"
                 },
@@ -79,7 +79,7 @@ namespace Shopping.API.Data
                 {
                     Name = "Google Pixel 3",
                     Description = "Google 原生系統，最佳相機體驗",
-                    ImageFile = "product-8.png",
+                    ImageFile = "",
                     Price = 799.00M,
                     Category = "Smart Phone"
                 }
