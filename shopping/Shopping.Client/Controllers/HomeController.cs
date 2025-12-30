@@ -14,14 +14,17 @@ public class HomeController : Controller
     private readonly HttpClient _httpClient;
     private readonly ILogger<HomeController> _logger;
 
+    private readonly Shopping.Client.Services.IImageService _imageService; 
+    
     /// <summary>
     /// 建構函式：注入 HttpClient 和 Logger
     /// </summary>
-    public HomeController(IHttpClientFactory httpClientFactory, ILogger<HomeController> logger)
+    public HomeController(IHttpClientFactory httpClientFactory, ILogger<HomeController> logger, Shopping.Client.Services.IImageService imageService)
     {
         // 從 HttpClientFactory 取得已設定的 HttpClient
         _httpClient = httpClientFactory.CreateClient("ShoppingAPIClient");
         _logger = logger;
+        _imageService = imageService; 
     }
 
     /// <summary>
@@ -74,11 +77,11 @@ public class HomeController : Controller
         // 建立有預設值的產品物件
         var product = new Product
         {
-            Name = "iPhone 15 Pro Max",
-            Category = "Smart Phone",
-            Description = "最新款旗艦智慧型手機，搭載強大性能處理器",
-            ImageFile = "product-default.png",
-            Price = 29999
+            Name = "測試產品",
+            Category = "測試類別",
+            Description = "測試描述",
+            ImageFile = "",
+            Price = 999
         };
         
         return View(product);
@@ -90,7 +93,7 @@ public class HomeController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Product product)
+    public async Task<IActionResult> Create(Product product, IFormFile imageFile)
     {
         try
         {
@@ -98,7 +101,26 @@ public class HomeController : Controller
             {
                 return View(product);
             }
-
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                _logger.LogInformation($"正在上傳圖片: {imageFile.FileName}");
+                var imageUrl = await _imageService.UploadImageAsync(imageFile);
+                
+                if (!string.IsNullOrEmpty(imageUrl))
+                {
+                    product.ImageFile = imageUrl;
+                    _logger.LogInformation($"圖片上傳成功: {imageUrl}");
+                }
+                else
+                {
+                    _logger.LogWarning("圖片上傳失敗，將使用預設值");
+                    product.ImageFile = "product-default.png";
+                }
+            }
+            else
+            {
+                product.ImageFile = "product-default.png";
+            }
             // 將產品序列化為 JSON
             var json = JsonConvert.SerializeObject(product);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -161,7 +183,7 @@ public class HomeController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(string id, Product product)
+    public async Task<IActionResult> Edit(string id, Product product, IFormFile imageFile)
     {
         try
         {
@@ -172,7 +194,22 @@ public class HomeController : Controller
 
             // 確保 ID 一致
             product.Id = id;
-
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                _logger.LogInformation($"正在上傳新圖片: {imageFile.FileName}");
+                var imageUrl = await _imageService.UploadImageAsync(imageFile);
+                
+                if (!string.IsNullOrEmpty(imageUrl))
+                {
+                    product.ImageFile = imageUrl;
+                    _logger.LogInformation($"新圖片上傳成功: {imageUrl}");
+                }
+                else
+                {
+                    _logger.LogWarning("圖片上傳失敗，保留原有圖片");
+                    // 如果上傳失敗，保留原有的 ImageFile（從表單的隱藏欄位）
+                }
+            }
             // 將產品序列化為 JSON
             var json = JsonConvert.SerializeObject(product);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
