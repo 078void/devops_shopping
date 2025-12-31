@@ -30,7 +30,8 @@ builder.Services.Configure<AzureStorageSettings>(
 
 // 註冊 Blob Storage 服務
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
-
+// 註冊 Queue 服務
+builder.Services.AddSingleton<IQueueService, QueueService>();
 var app = builder.Build();
 
 // ========================================

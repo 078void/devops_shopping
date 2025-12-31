@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using Shopping.API.Data;
 using Shopping.API.Models;
+using Shopping.API.Services;
 
 namespace Shopping.API.Controllers;
 
@@ -15,13 +16,15 @@ public class ProductController : ControllerBase
     private readonly IProductContext _context;
     private readonly ILogger<ProductController> _logger;
 
+    private readonly IQueueService _queueService;
     /// <summary>
     /// 透過建構函式注入相依性
     /// </summary>
-    public ProductController(IProductContext context, ILogger<ProductController> logger)
+    public ProductController(IProductContext context, ILogger<ProductController> logger, IQueueService queueService)
     {
         _context = context;
         _logger = logger;
+        _queueService = queueService;
     }
 
     /// <summary>
@@ -128,6 +131,35 @@ public class ProductController : ControllerBase
                 return NotFound($"找不到產品 ID: {id}");
             }
 
+            if (existingProduct.Price != product.Price)
+            {
+                // 計算價格變動金額
+                var changeAmount = product.Price - existingProduct.Price;
+                
+                // 計算價格變動百分比
+                var changePercentage = existingProduct.Price != 0 
+                    ? (changeAmount / existingProduct.Price) * 100 
+                    : 0;
+
+                // 建立價格變動訊息
+                var priceChangeMessage = new PriceChangeMessage
+                {
+                    ProductId = id,
+                    ProductName = product.Name,
+                    OldPrice = existingProduct.Price,
+                    NewPrice = product.Price,
+                    ChangeAmount = changeAmount,
+                    ChangePercentage = changePercentage
+                };
+
+                // 發送訊息到 Queue
+                await _queueService.SendPriceChangeMessageAsync(priceChangeMessage);
+                
+                _logger.LogInformation(
+                    $"💰 偵測到價格變動: {product.Name} " +
+                    $"${existingProduct.Price} → ${product.Price}");
+            }
+            
             product.Id = id;
             var result = await _context.Products.ReplaceOneAsync(p => p.Id == id, product);
 
