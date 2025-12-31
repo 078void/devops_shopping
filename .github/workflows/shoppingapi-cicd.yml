@@ -8,8 +8,7 @@ on:
   push:
     branches:
       - master
-      - github-action-cicd-test
-      - dns-setting
+      - picture-upload(azure-storage)
     paths:
       - 'shopping/Shopping.API/**'
       - 'shopping/k8s/shoppingapi-*.yaml'
@@ -119,6 +118,11 @@ jobs:
         run: |
           kubectl create secret generic mongodb-conn \
             --from-literal=connection-string="mongodb://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@mongodb-service:27017/ProductDb?authSource=admin" \
+            --dry-run=client -o yaml | kubectl apply -f -
+      - name: 建立 Azure Storage Secret
+        run: |
+          kubectl create secret generic azure-storage-secret \
+            --from-literal=connection-string="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
             --dry-run=client -o yaml | kubectl apply -f -
       - name: 更新 Deployment
         run: |

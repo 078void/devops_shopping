@@ -32,8 +32,12 @@ services:
       - DatabaseSettings__ConnectionString=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@shopping-mongodb:27017
       - DatabaseSettings__DatabaseName=ProductDb
       - DatabaseSettings__CollectionName=Products
+      - AzureStorage__ConnectionString=${AZURE_STORAGE_CONNECTION_STRING}
+      - AzureStorage__ProductImagesContainer=product-images
+      - AzureStorage__PublicBlobUrl=https://shoppingdev001.blob.core.windows.net
     depends_on:
       - shopping-mongodb
+      - azurite
     restart: on-failure
 
   # Shopping.Client 前端服務
@@ -52,8 +56,19 @@ services:
       - shopping-api
     restart: on-failure
 
+  # Azurite - Azure Storage 模擬器（用於圖片儲存）
+  azurite:
+    container_name: azurite
+    image: arafato/azurite:latest
+    ports:
+      - "10000:10000"  # Blob service
+      - "10001:10001"  # Queue service
+      - "10002:10002"  # Table service
+    volumes:
+      - azurite-data:/data
 # ========================================
 # 資料卷定義（持久化資料）
 # ========================================
 volumes:
   mongo-data:
+  azurite-data:

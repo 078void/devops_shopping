@@ -61,4 +61,8 @@ spec:
             configMapKeyRef:
               name: shoppingapi-configmap
               key: DatabaseSettings__CollectionName
-        
+        - name: AzureStorage__ConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: azure-storage-secret
+              key: connection-string

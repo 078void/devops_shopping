@@ -25,9 +25,8 @@ namespace Shopping.API.Services
             // 建立 Blob Service Client
             _blobServiceClient = new BlobServiceClient(_settings.ConnectionString);
 
-            // 取得或建立 Container
+            // 取得 Container Client（不立即創建）
             _containerClient = _blobServiceClient.GetBlobContainerClient(_settings.ProductImagesContainer);
-            _containerClient.CreateIfNotExists(PublicAccessType.Blob);
 
             _logger.LogInformation($"Blob Storage 服務已初始化，Container: {_settings.ProductImagesContainer}");
         }
@@ -39,6 +38,15 @@ namespace Shopping.API.Services
         {
             try
             {
+                try
+                {
+                    await _containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+                }
+                catch (Azure.RequestFailedException ex) when (ex.Status == 409)
+                {
+                    // 容器已存在，忽略
+                }
+        
                 // 產生唯一的檔案名稱（避免重複）
                 var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
                 
@@ -60,6 +68,15 @@ namespace Shopping.API.Services
                 _logger.LogInformation($"成功上傳圖片: {uniqueFileName}");
 
                 // 回傳圖片的 URL
+                // 如果設定了公開 URL，使用公開 URL（給瀏覽器用）
+                // 否則使用 Blob 的內部 URL
+                if (!string.IsNullOrEmpty(_settings.PublicBlobUrl))
+                {
+                    var publicUrl = $"{_settings.PublicBlobUrl}/{_settings.ProductImagesContainer}/{uniqueFileName}";
+                    _logger.LogInformation($"返回公開 URL: {publicUrl}");
+                    return publicUrl;
+                }
+                
                 return blobClient.Uri.ToString();
             }
             catch (Exception ex)
@@ -92,6 +109,13 @@ namespace Shopping.API.Services
         /// </summary>
         public string GetImageUrl(string fileName)
         {
+            // 如果設定了公開 URL，使用公開 URL
+            if (!string.IsNullOrEmpty(_settings.PublicBlobUrl))
+            {
+                return $"{_settings.PublicBlobUrl}/{_settings.ProductImagesContainer}/{fileName}";
+            }
+            
+            // 否則使用 Blob 的內部 URL
             var blobClient = _containerClient.GetBlobClient(fileName);
             return blobClient.Uri.ToString();
         }
