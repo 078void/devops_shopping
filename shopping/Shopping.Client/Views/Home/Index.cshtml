@@ -21,17 +21,17 @@
     <!-- 訊息提示 -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            ✅ @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                ✅ @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            ❌ @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                ❌ @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
     }
 
     <!-- 產品列表 -->
@@ -39,49 +39,66 @@
         <div class="col-md-12">
             @if (Model != null && Model.Any())
             {
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>產品名稱</th>
-                            <th>類別</th>
-                            <th>描述</th>
-                            <th class="text-end">價格</th>
-                            <th class="text-center" width="180">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var product in Model)
-                        {
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
                             <tr>
-                                <td><strong>@product.Name</strong></td>
-                                <td><span class="badge bg-info">@product.Category</span></td>
-                                <td>@product.Description</td>
-                                <td class="text-end text-success"><strong>NT$ @product.Price.ToString("N2")</strong></td>
-                                <td class="text-center">
-                                    <a asp-action="Edit" asp-route-id="@product.Id" 
-                                       class="btn btn-sm btn-warning" title="編輯">
-                                        ✏️ 編輯
-                                    </a>
-                                    <form asp-action="Delete" asp-route-id="@product.Id" 
-                                          method="post" class="d-inline"
-                                          onsubmit="return confirm('確定要刪除「@product.Name」嗎？');">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-danger" title="刪除">
-                                            🗑️ 刪除
-                                        </button>
-                                    </form>
-                                </td>
+                                <th width="100">圖片</th>
+                                <th>產品名稱</th>
+                                <th>類別</th>
+                                <th>描述</th>
+                                <th class="text-end">價格</th>
+                                <th class="text-center" width="180">操作</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in Model)
+                            {
+                                    <tr>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(product.ImageFile))
+                                            {
+                                                    <img src="@product.ImageFile" alt="@product.Name" 
+                                                         class="img-thumbnail" 
+                                                         style="max-width: 80px; max-height: 80px; object-fit: cover;" 
+                                                         onerror="this.src='https://via.placeholder.com/80?text=No+Image';" />
+                                            }
+                                            else
+                                            {
+                                                    <img src="https://via.placeholder.com/80?text=No+Image" 
+                                                         alt="無圖片" 
+                                                         class="img-thumbnail" 
+                                                         style="max-width: 80px; max-height: 80px; object-fit: cover;" />
+                                            }
+                                        </td>
+                                        <td><strong>@product.Name</strong></td>
+                                        <td><span class="badge bg-info">@product.Category</span></td>
+                                        <td>@product.Description</td>
+                                        <td class="text-end text-success"><strong>NT$ @product.Price.ToString("N2")</strong></td>
+                                        <td class="text-center">
+                                            <a asp-action="Edit" asp-route-id="@product.Id" 
+                                               class="btn btn-sm btn-warning" title="編輯">
+                                                ✏️ 編輯
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@product.Id" 
+                                                  method="post" class="d-inline"
+                                                  onsubmit="return confirm('確定要刪除「@product.Name」嗎？');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-danger" title="刪除">
+                                                    🗑️ 刪除
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                            }
+                        </tbody>
+                    </table>
             }
             else
             {
-                <div class="alert alert-warning" role="alert">
-                    ⚠️ 目前沒有產品資料
-                    <a asp-action="Create" class="alert-link">立即新增第一個產品</a>
-                </div>
+                    <div class="alert alert-warning" role="alert">
+                        ⚠️ 目前沒有產品資料
+                        <a asp-action="Create" class="alert-link">立即新增第一個產品</a>
+                    </div>
             }
         </div>
     </div>

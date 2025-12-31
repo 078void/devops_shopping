@@ -12,11 +12,13 @@
                     <h2 class="mb-0">✏️ 編輯產品</h2>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Edit" method="post">
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
                         
                         <!-- 隱藏的 ID 欄位 -->
                         <input type="hidden" asp-for="Id" />
+                        <!-- 隱藏欄位：儲存原始圖片 URL -->
+                        <input type="hidden" id="originalImageUrl" value="@Model.ImageFile" />
 
                         <div class="mb-3">
                             <label asp-for="Name" class="form-label">產品名稱 <span class="text-danger">*</span></label>
@@ -43,11 +45,60 @@
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
+                        <!-- 🆕 圖片上傳區塊（支援拖放 + 預覽現有圖片） -->
                         <div class="mb-3">
-                            <label asp-for="ImageFile" class="form-label">產品圖片檔名</label>
-                            <input asp-for="ImageFile" class="form-control" />
-                            <span asp-validation-for="ImageFile" class="text-danger"></span>
+                            <label class="form-label">產品圖片</label>
+                            
+                            <!-- 現有圖片預覽（只有當有圖片時才顯示） -->
+                            @if (!string.IsNullOrEmpty(Model.ImageFile))
+                            {
+                                        <div id="currentImagePreview" class="mb-3">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">目前圖片：</h6>
+                                                    <img id="currentImage" src="@Model.ImageFile" alt="目前產品圖片" 
+                                                         class="img-thumbnail" style="max-width: 300px; max-height: 300px;" />
+                                                    <div class="mt-2">
+                                                        <button type="button" class="btn btn-sm btn-primary" onclick="showUploadZone()">
+                                                            🔄 更換圖片
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                            }
+                            
+                            <!-- 拖放上傳區域 -->
+                            <div id="dropZone" class="drop-zone" style="@(!string.IsNullOrEmpty(Model.ImageFile) ? "display: none;" : "")" 
+                                 onclick="document.getElementById('imageFile').click()">
+                                <div class="drop-zone-content">
+                                    <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #6c757d;"></i>
+                                    <p class="mt-2 mb-1"><strong>點擊選擇圖片</strong> 或 拖放圖片到這裡</p>
+                                    <small class="text-muted">支援 JPG、PNG、GIF 等格式，最大 5MB</small>
+                                </div>
+                            </div>
+                            
+                            <!-- 隱藏的文件輸入 -->
+                            <input type="file" name="imageFile" id="imageFile" style="display: none;" accept="image/*" onchange="previewNewImage(event)" />
+                            
+                            <!-- 新圖片預覽 -->
+                            <div id="newImagePreview" class="mt-3" style="display: none;">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-success">新圖片預覽：</h6>
+                                        <img id="newPreview" src="#" alt="新圖片預覽" class="img-thumbnail" style="max-width: 300px; max-height: 300px;" />
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="cancelNewImage()">
+                                                🗑️ 取消更換
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- 隱藏欄位：儲存圖片 URL -->
+                        <input type="hidden" asp-for="ImageFile" id="imageUrl" />
 
                         <div class="mb-3">
                             <label asp-for="Price" class="form-label">價格 (NT$) <span class="text-danger">*</span></label>
@@ -75,12 +126,161 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    
+            <style>
+                /* 拖放區域樣式 */
+                .drop-zone {
+                    border: 3px dashed #dee2e6;
+                    border-radius: 8px;
+                    padding: 40px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    background-color: #f8f9fa;
+                }
+        
+                .drop-zone:hover {
+                    border-color: #ffc107;
+                    background-color: #fff3cd;
+                }
+        
+                .drop-zone.dragover {
+                    border-color: #ffc107;
+                    background-color: #fff3cd;
+                    transform: scale(1.02);
+                }
+        
+                .drop-zone-content {
+                    pointer-events: none;
+                }
+            </style>
+    
+        <script>
+            // 等待 DOM 完全載入後再執行
+            document.addEventListener('DOMContentLoaded', function() {
+                const dropZone = document.getElementById('dropZone');
+                const fileInput = document.getElementById('imageFile');
+            
+                // 確保元素存在
+                if (!dropZone || !fileInput) {
+                    console.error('拖放區域或檔案輸入元素未找到');
+                    return;
+                }
+            
+                // 防止默認的拖放行為
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, preventDefaults, false);
+                    document.body.addEventListener(eventName, preventDefaults, false);
+                });
+            
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            
+                // 拖放視覺效果
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, highlight, false);
+                });
+            
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, unhighlight, false);
+                });
+            
+                function highlight(e) {
+                    dropZone.classList.add('dragover');
+                }
+            
+                function unhighlight(e) {
+                    dropZone.classList.remove('dragover');
+                }
+            
+                // 處理拖放的檔案
+                dropZone.addEventListener('drop', handleDrop, false);
+            
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        previewNewImage({ target: { files: files } });
+                    }
+                }
+            });
+        
+            // 顯示上傳區域（點擊"更換圖片"時）
+            function showUploadZone() {
+                const currentImagePreview = document.getElementById('currentImagePreview');
+                const dropZone = document.getElementById('dropZone');
+            
+                if (currentImagePreview) {
+                    currentImagePreview.style.display = 'none';
+                }
+                if (dropZone) {
+                    dropZone.style.display = 'block';
+                }
+            }
+        
+            // 預覽新圖片
+            function previewNewImage(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+            
+                // 檢查檔案類型
+                if (!file.type.startsWith('image/')) {
+                    alert('請選擇圖片檔案！');
+                    return;
+                }
+            
+                // 檢查檔案大小（5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('圖片大小不能超過 5MB！');
+                    return;
+                }
+            
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const newPreview = document.getElementById('newPreview');
+                    const newImagePreview = document.getElementById('newImagePreview');
+                    const dropZone = document.getElementById('dropZone');
+                    const currentImagePreview = document.getElementById('currentImagePreview');
+                
+                    if (newPreview) newPreview.src = e.target.result;
+                    if (newImagePreview) newImagePreview.style.display = 'block';
+                    if (dropZone) dropZone.style.display = 'none';
+                    if (currentImagePreview) currentImagePreview.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        
+            // 取消更換圖片（恢復顯示原圖或上傳區域）
+            function cancelNewImage() {
+                const imageFile = document.getElementById('imageFile');
+                const newImagePreview = document.getElementById('newImagePreview');
+                const originalImageUrl = document.getElementById('originalImageUrl');
+                const currentImagePreview = document.getElementById('currentImagePreview');
+                const dropZone = document.getElementById('dropZone');
+                const imageUrl = document.getElementById('imageUrl');
+            
+                // 清空檔案輸入
+                if (imageFile) imageFile.value = '';
+            
+                // 隱藏新圖片預覽
+                if (newImagePreview) newImagePreview.style.display = 'none';
+            
+                // 檢查是否有原始圖片
+                if (originalImageUrl && originalImageUrl.value) {
+                    // 有原始圖片，恢復顯示原圖
+                    if (currentImagePreview) currentImagePreview.style.display = 'block';
+                    if (imageUrl) imageUrl.value = originalImageUrl.value;
+                } else {
+                    // 沒有原始圖片，顯示上傳區域
+                    if (dropZone) dropZone.style.display = 'block';
+                }
+            }
+            </script>
 }
-
-
-
-
-
-
-

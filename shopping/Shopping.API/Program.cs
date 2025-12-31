@@ -3,6 +3,7 @@ using Shopping.API.Repositories;
 using Shopping.API.Settings; 
 using Scalar.AspNetCore;
 
+using Shopping.API.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // ========================================
@@ -22,6 +23,13 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // 註冊 OpenAPI 服務（.NET 10 新方式）
 builder.Services.AddOpenApi();
+
+// 註冊 Azure Storage 設定
+builder.Services.Configure<AzureStorageSettings>(
+    builder.Configuration.GetSection("AzureStorage"));
+
+// 註冊 Blob Storage 服務
+builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
 var app = builder.Build();
 

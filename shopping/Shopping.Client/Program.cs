@@ -26,6 +26,8 @@ builder.Services.AddHttpClient("ShoppingAPIClient", client =>
         ?? "http://localhost:5000");
 });
 
+builder.Services.AddScoped<Shopping.Client.Services.IImageService, Shopping.Client.Services.ImageService>();
+
 var app = builder.Build();
 
 // 使用轉發標頭（必須在其他 middleware 之前）
