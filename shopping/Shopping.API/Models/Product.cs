@@ -14,9 +14,11 @@ namespace Shopping.API.Models
 
         public string Category { get; set; } = string.Empty;
 
-        public string Description { get; set; } = string.Empty;
+        // 產品描述（選填）
+        public string? Description { get; set; } = string.Empty;
 
-        public string ImageFile { get; set; } = string.Empty;
+        // 產品圖片檔名（選填）
+        public string? ImageFile { get; set; } = string.Empty;
 
         public decimal Price { get; set; }
     }

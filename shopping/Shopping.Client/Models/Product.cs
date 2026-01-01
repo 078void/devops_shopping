@@ -19,12 +19,12 @@ public class Product
     [Required(ErrorMessage = "產品類別為必填")]
     public string Category { get; set; } = string.Empty;
 
-    /// <summary>產品描述</summary>
+    /// <summary>產品描述（選填）</summary>
     [StringLength(500, ErrorMessage = "產品描述最多 500 個字元")]
-    public string Description { get; set; } = string.Empty;
+    public string? Description { get; set; } = string.Empty;
 
-    /// <summary>產品圖片檔名</summary>
-    public string ImageFile { get; set; } = string.Empty;
+    /// <summary>產品圖片檔名（選填）</summary>
+    public string? ImageFile { get; set; } = string.Empty;
 
     /// <summary>產品價格</summary>
     [Required(ErrorMessage = "產品價格為必填")]

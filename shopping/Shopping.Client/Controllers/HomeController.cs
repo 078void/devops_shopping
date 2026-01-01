@@ -3,7 +3,8 @@ using Newtonsoft.Json;
 using Shopping.Client.Models;
 using System.Diagnostics;
 using System.Text;
-
+using System.Text.Json;
+using Shopping.Client.Models;
 namespace Shopping.Client.Controllers;
 
 /// <summary>
@@ -14,8 +15,8 @@ public class HomeController : Controller
     private readonly HttpClient _httpClient;
     private readonly ILogger<HomeController> _logger;
 
-    private readonly Shopping.Client.Services.IImageService _imageService; 
-    
+    private readonly Shopping.Client.Services.IImageService _imageService;
+
     /// <summary>
     /// 建構函式：注入 HttpClient 和 Logger
     /// </summary>
@@ -24,7 +25,7 @@ public class HomeController : Controller
         // 從 HttpClientFactory 取得已設定的 HttpClient
         _httpClient = httpClientFactory.CreateClient("ShoppingAPIClient");
         _logger = logger;
-        _imageService = imageService; 
+        _imageService = imageService;
     }
 
     /// <summary>
@@ -47,7 +48,7 @@ public class HomeController : Controller
             var content = await response.Content.ReadAsStringAsync();
 
             // 將 JSON 反序列化為 Product 清單
-            var products = JsonConvert.DeserializeObject<List<Product>>(content) 
+            var products = JsonConvert.DeserializeObject<List<Product>>(content)
                 ?? new List<Product>();
 
             _logger.LogInformation($"成功取得 {products.Count} 筆產品資料");
@@ -74,16 +75,16 @@ public class HomeController : Controller
     /// </summary>
     public IActionResult Create()
     {
-        // 建立有預設值的產品物件
+        // 建立空白的產品物件（不設定預設值，避免驗證問題）
         var product = new Product
         {
-            Name = "測試產品",
-            Category = "測試類別",
-            Description = "測試描述",
+            Name = "",
+            Category = "",
+            Description = "",
             ImageFile = "",
-            Price = 999
+            Price = 0
         };
-        
+
         return View(product);
     }
 
@@ -97,15 +98,35 @@ public class HomeController : Controller
     {
         try
         {
+            // 記錄接收到的資料（調試用）
+            _logger.LogInformation($"Create POST 接收到的資料: Name={product.Name}, Category={product.Category}, Price={product.Price}, ImageFile={product.ImageFile}");
+
+            // 🔧 移除 imageFile 欄位的驗證錯誤（圖片是選填的）
+            if (ModelState.ContainsKey("imageFile"))
+            {
+                ModelState.Remove("imageFile");
+                _logger.LogInformation("已移除 imageFile 的驗證錯誤（圖片為選填）");
+            }
+
             if (!ModelState.IsValid)
             {
+                // 記錄驗證錯誤
+                foreach (var error in ModelState)
+                {
+                    if (error.Value.Errors.Count > 0)
+                    {
+                        _logger.LogWarning($"驗證錯誤 - {error.Key}: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
+                    }
+                }
+
+                TempData["ErrorMessage"] = "資料驗證失敗，請檢查必填欄位";
                 return View(product);
             }
             if (imageFile != null && imageFile.Length > 0)
             {
                 _logger.LogInformation($"正在上傳圖片: {imageFile.FileName}");
                 var imageUrl = await _imageService.UploadImageAsync(imageFile);
-                
+
                 if (!string.IsNullOrEmpty(imageUrl))
                 {
                     product.ImageFile = imageUrl;
@@ -113,14 +134,20 @@ public class HomeController : Controller
                 }
                 else
                 {
-                    _logger.LogWarning("圖片上傳失敗，將使用預設值");
-                    product.ImageFile = "product-default.png";
+                    _logger.LogWarning("圖片上傳失敗，圖片將為空");
+                    product.ImageFile = string.Empty;
                 }
             }
             else
             {
-                product.ImageFile = "product-default.png";
+                // 沒有上傳圖片時，保持為空
+                product.ImageFile = string.Empty;
+                _logger.LogInformation("未上傳圖片");
             }
+
+            // 確保 Description 不是 null（允許空字串）
+            product.Description ??= string.Empty;
+
             // 將產品序列化為 JSON
             var json = JsonConvert.SerializeObject(product);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -187,18 +214,37 @@ public class HomeController : Controller
     {
         try
         {
+            // 🔧 移除 imageFile 欄位的驗證錯誤（圖片是選填的）
+            if (ModelState.ContainsKey("imageFile"))
+            {
+                ModelState.Remove("imageFile");
+                _logger.LogInformation("已移除 imageFile 的驗證錯誤（圖片為選填）");
+            }
+
             if (!ModelState.IsValid)
             {
+                // 記錄驗證錯誤
+                foreach (var error in ModelState)
+                {
+                    if (error.Value.Errors.Count > 0)
+                    {
+                        _logger.LogWarning($"編輯驗證錯誤 - {error.Key}: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
+                    }
+                }
+
+                TempData["ErrorMessage"] = "資料驗證失敗，請檢查必填欄位";
                 return View(product);
             }
 
             // 確保 ID 一致
             product.Id = id;
+
+            // 處理圖片上傳
             if (imageFile != null && imageFile.Length > 0)
             {
                 _logger.LogInformation($"正在上傳新圖片: {imageFile.FileName}");
                 var imageUrl = await _imageService.UploadImageAsync(imageFile);
-                
+
                 if (!string.IsNullOrEmpty(imageUrl))
                 {
                     product.ImageFile = imageUrl;
@@ -210,6 +256,22 @@ public class HomeController : Controller
                     // 如果上傳失敗，保留原有的 ImageFile（從表單的隱藏欄位）
                 }
             }
+            else
+            {
+                // 沒有上傳新圖片時，保留表單提交的 ImageFile 值
+                // 這個值來自隱藏欄位，可能是：
+                // 1. 原有圖片 URL（使用者沒有更動）
+                // 2. 空字串（使用者主動點擊「移除圖片」）
+                _logger.LogInformation($"未上傳新圖片，保留表單中的圖片值: '{product.ImageFile ?? "(null)"}'");
+                // product.ImageFile 保持不變（來自表單的隱藏欄位）
+            }
+
+            // 確保 Description 和 ImageFile 不是 null（將 null 轉為空字串）
+            product.Description ??= string.Empty;
+            product.ImageFile ??= string.Empty;
+
+            _logger.LogInformation($"最終要更新的圖片值: '{product.ImageFile}'");
+
             // 將產品序列化為 JSON
             var json = JsonConvert.SerializeObject(product);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -271,6 +333,38 @@ public class HomeController : Controller
     }
 
     /// <summary>
+    /// 訂閱商品價格通知（轉發到 API）
+    /// POST: /api/subscription
+    /// </summary>
+    [HttpPost]
+    [Route("api/subscription")]
+    public async Task<IActionResult> Subscribe([FromBody] ProductSubscription subscriptionData)
+    {
+        try
+        {
+            _logger.LogInformation("轉發訂閱請求到 Shopping.API");
+            _logger.LogInformation($"收到的資料 - ProductId: {subscriptionData.ProductId}, Email: {subscriptionData.Email}, ProductName: {subscriptionData.ProductName}");
+            var json = JsonConvert.SerializeObject(subscriptionData);
+            _logger.LogInformation($"序列化後的 JSON: {json}");
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.PostAsync("/api/subscription", content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return Ok(JsonConvert.DeserializeObject(responseContent));
+            }
+            
+            return StatusCode((int)response.StatusCode, JsonConvert.DeserializeObject(responseContent));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"訂閱失敗: {ex.Message}");
+            return StatusCode(500, new { message = "訂閱失敗，請稍後再試" });
+        }
+    }
+    /// <summary>
     /// 隱私權政策頁面
     /// </summary>
     public IActionResult Privacy()
@@ -284,9 +378,9 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel 
-        { 
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier 
+        return View(new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
         });
     }
 }

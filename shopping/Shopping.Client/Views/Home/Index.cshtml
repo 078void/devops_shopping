@@ -75,13 +75,21 @@
                                         <td>@product.Description</td>
                                         <td class="text-end text-success"><strong>NT$ @product.Price.ToString("N2")</strong></td>
                                         <td class="text-center">
+                                            <!-- 訂閱按鈕 -->
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-info" 
+                                                    onclick="openSubscribeModal('@product.Id', '@product.Name')"
+                                                    title="訂閱降價通知">
+                                                🔔 訂閱
+                                            </button>
+                                            
                                             <a asp-action="Edit" asp-route-id="@product.Id" 
-                                               class="btn btn-sm btn-warning" title="編輯">
+                                            class="btn btn-sm btn-warning" title="編輯">
                                                 ✏️ 編輯
                                             </a>
                                             <form asp-action="Delete" asp-route-id="@product.Id" 
-                                                  method="post" class="d-inline"
-                                                  onsubmit="return confirm('確定要刪除「@product.Name」嗎？');">
+                                                method="post" class="d-inline"
+                                                onsubmit="return confirm('確定要刪除「@product.Name」嗎？');">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-sm btn-danger" title="刪除">
                                                     🗑️ 刪除
@@ -102,4 +110,162 @@
             }
         </div>
     </div>
+    <!-- 🆕 訂閱通知 Modal -->
+<div class="modal fade" id="subscribeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-bell"></i> 🔔 訂閱價格變動通知
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="subscribeForm">
+                    <input type="hidden" id="productId" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <strong>商品名稱：</strong>
+                        </label>
+                        <p class="form-control-plaintext" id="productName"></p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <strong>您的 Email：</strong>
+                        </label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               placeholder="example@gmail.com"
+                               required />
+                        <div class="form-text">
+                            當價格變動時，我們會發送通知到此信箱
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <strong>通知選項：</strong>
+                        </label>
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="notifyOnDecrease" 
+                                   checked />
+                            <label class="form-check-label" for="notifyOnDecrease">
+                                📉 價格<strong>下降</strong>時通知我（推薦）
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="notifyOnIncrease" />
+                            <label class="form-check-label" for="notifyOnIncrease">
+                                📈 價格<strong>上漲</strong>時通知我
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="subscribeMessage" class="alert" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    取消
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitSubscribe()">
+                    <i class="bi bi-check-circle"></i> 確認訂閱
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+    <!--  JavaScript 處理訂閱邏輯 -->
+    <script>
+        let currentProductId = '';
+        let currentProductName = '';
+
+        // 開啟訂閱 Modal
+        function openSubscribeModal(productId, productName) {
+            currentProductId = productId;
+            currentProductName = productName;
+            
+            document.getElementById('productId').value = productId;
+            document.getElementById('productName').textContent = productName;
+            document.getElementById('subscribeMessage').style.display = 'none';
+            
+            // 重置表單
+            document.getElementById('email').value = '';
+            document.getElementById('notifyOnDecrease').checked = true;
+            document.getElementById('notifyOnIncrease').checked = false;
+            
+            // 顯示 Modal
+            const modal = new bootstrap.Modal(document.getElementById('subscribeModal'));
+            modal.show();
+        }
+
+        // 提交訂閱
+        async function submitSubscribe() {
+            const email = document.getElementById('email').value.trim();
+            const notifyOnDecrease = document.getElementById('notifyOnDecrease').checked;
+            const notifyOnIncrease = document.getElementById('notifyOnIncrease').checked;
+            
+            // 驗證
+            if (!email) {
+                showMessage('請輸入 Email', 'danger');
+                return;
+            }
+            
+            
+            if (!notifyOnDecrease && !notifyOnIncrease) {
+                showMessage('請至少選擇一種通知選項', 'danger');
+                return;
+            }
+            
+            // 準備資料
+            const data = {
+                ProductId: currentProductId,              
+                ProductName: currentProductName,
+                Email: email,
+                NotifyOnPriceIncrease: notifyOnIncrease,
+                NotifyOnPriceDecrease: notifyOnDecrease
+            };
+            try {
+                // 發送訂閱請求
+                const response = await fetch('/api/subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('✅ ' + result.message, 'success');
+                    
+                    // 3 秒後關閉 Modal
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('subscribeModal')).hide();
+                    }, 3000);
+                } else {
+                    showMessage('❌ 訂閱失敗：' + (result.message || '未知錯誤'), 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('❌ 網路錯誤，請稍後再試', 'danger');
+            }
+        }
+
+        // 顯示訊息
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('subscribeMessage');
+            messageDiv.className = `alert alert-${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+        }
+    </script>
 </div>
