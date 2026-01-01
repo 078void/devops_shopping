@@ -8,7 +8,7 @@ on:
   push:
     branches:
       - master
-      - price-tracking(Azure-Queue-+-Functions)
+      - price-tracking(Azure-Queue-Functions)
     paths:
       - 'shopping/Shopping.Functions/**'
       - '.github/workflows/shoppingfunctions-cicd.yml'

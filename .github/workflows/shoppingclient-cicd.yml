@@ -10,7 +10,7 @@ on:
       - master
       - github-action-cicd-test
       - dns-setting
-      - price-tracking(Azure-Queue-+-Functions)
+      - price-tracking(Azure-Queue-Functions)
     paths:
       - 'shopping/Shopping.Client/**'
       - 'shopping/k8s/shoppingclient-*.yaml'
