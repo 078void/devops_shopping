@@ -6,6 +6,7 @@ using Moq;
 using Shopping.API.Controllers;
 using Shopping.API.Data;
 using Shopping.API.Models;
+using Shopping.API.Services;
 
 namespace Shopping.API.Tests.Controllers;
 
@@ -18,6 +19,7 @@ public class ProductControllerTests
     private readonly Mock<IProductContext> _mockContext;
     private readonly Mock<ILogger<ProductController>> _mockLogger;
     private readonly Mock<IMongoCollection<Product>> _mockCollection;
+private readonly Mock<IQueueService> _mockQueueService;
     private readonly ProductController _controller;
 
     /// <summary>
@@ -30,12 +32,12 @@ public class ProductControllerTests
         _mockContext = new Mock<IProductContext>();
         _mockLogger = new Mock<ILogger<ProductController>>();
         _mockCollection = new Mock<IMongoCollection<Product>>();
-
+        _mockQueueService = new Mock<IQueueService>();
         // 設定 Context 回傳 Mock Collection
         _mockContext.Setup(x => x.Products).Returns(_mockCollection.Object);
 
         // 創建被測試的 Controller
-        _controller = new ProductController(_mockContext.Object, _mockLogger.Object);
+        _controller = new ProductController(_mockContext.Object, _mockLogger.Object, _mockQueueService.Object);
     }
 
     #region GetProducts 測試
