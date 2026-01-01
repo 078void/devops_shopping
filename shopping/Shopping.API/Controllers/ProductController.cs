@@ -156,10 +156,10 @@ public class ProductController : ControllerBase
                 await _queueService.SendPriceChangeMessageAsync(priceChangeMessage);
                 
                 _logger.LogInformation(
-                    $"💰 偵測到價格變動: {product.Name} " +
+                    $" 偵測到價格變動: {product.Name} " +
                     $"${existingProduct.Price} → ${product.Price}");
             }
-            
+
             product.Id = id;
             var result = await _context.Products.ReplaceOneAsync(p => p.Id == id, product);
 

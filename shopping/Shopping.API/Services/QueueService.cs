@@ -46,7 +46,7 @@ namespace Shopping.API.Services
                 await _priceChangeQueue.SendMessageAsync(messageJson);
                 
                 _logger.LogInformation(
-                    $"💰 已發送價格變動訊息: {message.ProductName} " +
+                    $"已發送價格變動訊息: {message.ProductName} " +
                     $"從 ${message.OldPrice} → ${message.NewPrice} " +
                     $"({message.ChangePercentage:F2}%)");
             }
