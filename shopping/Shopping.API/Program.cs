@@ -14,7 +14,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("DatabaseSettings"));
 
 // 註冊控制器服務
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 // 註冊 ProductContext 為 Scoped 生命週期
 builder.Services.AddScoped<IProductContext, ProductContext>();
@@ -32,6 +37,9 @@ builder.Services.Configure<AzureStorageSettings>(
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 // 註冊 Queue 服務
 builder.Services.AddSingleton<IQueueService, QueueService>();
+// 註冊訂閱服務
+builder.Services.AddSingleton<ISubscriptionService, SubscriptionService>();
+
 var app = builder.Build();
 
 // ========================================

@@ -3,7 +3,8 @@ using Newtonsoft.Json;
 using Shopping.Client.Models;
 using System.Diagnostics;
 using System.Text;
-
+using System.Text.Json;
+using Shopping.Client.Models;
 namespace Shopping.Client.Controllers;
 
 /// <summary>
@@ -331,6 +332,38 @@ public class HomeController : Controller
         }
     }
 
+    /// <summary>
+    /// 訂閱商品價格通知（轉發到 API）
+    /// POST: /api/subscription
+    /// </summary>
+    [HttpPost]
+    [Route("api/subscription")]
+    public async Task<IActionResult> Subscribe([FromBody] ProductSubscription subscriptionData)
+    {
+        try
+        {
+            _logger.LogInformation("轉發訂閱請求到 Shopping.API");
+            _logger.LogInformation($"收到的資料 - ProductId: {subscriptionData.ProductId}, Email: {subscriptionData.Email}, ProductName: {subscriptionData.ProductName}");
+            var json = JsonConvert.SerializeObject(subscriptionData);
+            _logger.LogInformation($"序列化後的 JSON: {json}");
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.PostAsync("/api/subscription", content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return Ok(JsonConvert.DeserializeObject(responseContent));
+            }
+            
+            return StatusCode((int)response.StatusCode, JsonConvert.DeserializeObject(responseContent));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"訂閱失敗: {ex.Message}");
+            return StatusCode(500, new { message = "訂閱失敗，請稍後再試" });
+        }
+    }
     /// <summary>
     /// 隱私權政策頁面
     /// </summary>
