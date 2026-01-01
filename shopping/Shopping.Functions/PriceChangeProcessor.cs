@@ -49,7 +49,7 @@ namespace Shopping.Functions
             try
             {
                 // ===== 第 2 步：把 JSON 字串轉成物件 =====
-                var message = JsonSerializer.Deserialize<PriceChangeMessage>(queueMessage);
+                var message = JsonSerializer.Deserialize<PriceChangeMessage>(queueMessage ?? "");
                 
                 // 檢查訊息是否正確
                 if (message == null)
