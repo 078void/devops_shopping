@@ -37,7 +37,10 @@
 - [x] 建立完整的 .NET 微服務架構
 - [x] 使用 Docker 容器化應用程式
 - [x] 部署容器化服務至 Kubernetes(AKS)
+- [x] 實作 Azure Blob Storage 圖片上傳
+- [x] 實作 Azure Queue Storage 訊息佇列                                   
+- [x] 實作 Azure Functions 事件驅動處理
 - [x] 撰寫基礎單元測試
-- [x] 實作 CI/CD Pipeline
+- [x] 實作 CI/CD Pipeline (GitHub Actions)
 - [ ] Terraform 多環境管理
 - [ ] 整合 Azure Monitor 監控
