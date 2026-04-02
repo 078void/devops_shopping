@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Shopping.Client.Models.Product>
+@model IEnumerable<Shopping.Client.Models.Product>
 
 @{
     ViewData["Title"] = "產品列表";
@@ -55,17 +55,19 @@
                             {
                                     <tr>
                                         <td>
+                                            @* 如果商品有設定圖片網址，優先顯示該圖片，載入失敗時改用預設圖片 *@
                                             @if (!string.IsNullOrEmpty(product.ImageFile))
                                             {
                                                     <img src="@product.ImageFile" alt="@product.Name" 
                                                          class="img-thumbnail" 
                                                          style="max-width: 80px; max-height: 80px; object-fit: cover;" 
-                                                         onerror="this.src='https://via.placeholder.com/80?text=No+Image';" />
+                                                         onerror="this.onerror=null; this.src='/images/default.png';" />
                                             }
                                             else
                                             {
-                                                    <img src="https://via.placeholder.com/80?text=No+Image" 
-                                                         alt="無圖片" 
+                                                @* 商品沒有圖片時，直接顯示內建的預設圖片 *@
+                                                    <img src="/images/default.png" 
+                                                         alt="預設商品圖片" 
                                                          class="img-thumbnail" 
                                                          style="max-width: 80px; max-height: 80px; object-fit: cover;" />
                                             }
